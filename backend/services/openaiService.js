@@ -99,33 +99,30 @@ async function generateDialogue(topic, level) {
 async function generateFillBlanks(grammar, count = 5) {
   try {
     // Generate unique context for variety
-    const contexts = ['daily life', 'work', 'travel', 'education', 'technology', 'nature', 'food', 'sports', 'music', 'movies'];
+    const contexts = ['daily life', 'work', 'travel', 'school', 'technology', 'nature', 'food', 'sports', 'hobbies', 'family'];
     const randomContext = contexts[Math.floor(Math.random() * contexts.length)];
-    const uniqueId = Date.now();
     
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are a creative English teacher creating UNIQUE and VARIED grammar exercises. IMPORTANT: Each exercise must be COMPLETELY DIFFERENT from others - use different subjects, verbs, contexts, and sentence structures. Never repeat similar sentences. All exercises MUST be in ENGLISH."
+          content: "You are an English teacher. Create grammar exercises in English. Always respond with valid JSON only, no extra text."
         },
         {
           role: "user",
-          content: `Create ${count} UNIQUE and DIVERSE fill-in-the-blank exercises IN ENGLISH focusing on "${grammar}". 
+          content: `Create exactly ${count} fill-in-the-blank exercises for "${grammar}" grammar topic. Context: ${randomContext}.
 
-IMPORTANT REQUIREMENTS:
-- Each sentence MUST be completely different (different topics, different subjects, different contexts)
-- Use varied contexts like: ${randomContext}, personal experiences, hypothetical situations
-- Mix positive, negative, and question forms where applicable
-- Use different subjects (I, you, he, she, it, we, they, proper names)
-- Each sentence should have ONE word missing (marked with ___)
-- Request ID: ${uniqueId}
+Rules:
+- All in English
+- Each sentence different (use I, you, he, she, we, they)
+- One word missing marked as ___
+- Return ONLY valid JSON array
 
-Format: Return a JSON array of objects with 'sentence' (English sentence with ___), 'answer' (the missing English word), and 'hint' (short English hint) fields.`
+Format: [{"sentence": "She ___ to school.", "answer": "goes", "hint": "present simple"}]`
         }
       ],
-      temperature: 0.95,
+      temperature: 0.85,
     });
 
     let content = response.choices[0].message.content;
@@ -133,16 +130,27 @@ Format: Return a JSON array of objects with 'sentence' (English sentence with __
     // Remove markdown code block markers if present
     content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     
+    // Try to extract JSON array if there's extra text
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      content = jsonMatch[0];
+    }
+    
     try {
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+      throw new Error('Invalid response format');
     } catch (e) {
-      // Fallback
+      console.error('JSON Parse Error:', e.message, 'Content:', content.substring(0, 200));
+      // Fallback with grammar-specific examples
       return [
-        {
-          sentence: `This is a sample sentence with a ___ word.`,
-          answer: "missing",
-          hint: `A word that means 'not present'`
-        }
+        { sentence: `I ___ English every day.`, answer: "study", hint: "verb for learning" },
+        { sentence: `She ___ to the gym yesterday.`, answer: "went", hint: "past tense of 'go'" },
+        { sentence: `They ___ playing football now.`, answer: "are", hint: "present continuous helper" },
+        { sentence: `He ___ already finished his homework.`, answer: "has", hint: "present perfect helper" },
+        { sentence: `We ___ go to the party tomorrow.`, answer: "will", hint: "future tense helper" }
       ];
     }
   } catch (error) {
