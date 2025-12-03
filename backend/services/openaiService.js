@@ -98,19 +98,34 @@ async function generateDialogue(topic, level) {
 // Генерация упражнений "Заполни пропуск"
 async function generateFillBlanks(grammar, count = 5) {
   try {
+    // Generate unique context for variety
+    const contexts = ['daily life', 'work', 'travel', 'education', 'technology', 'nature', 'food', 'sports', 'music', 'movies'];
+    const randomContext = contexts[Math.floor(Math.random() * contexts.length)];
+    const uniqueId = Date.now();
+    
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are an English teacher creating grammar exercises for students learning English. IMPORTANT: All exercises MUST be written entirely in ENGLISH. If the grammar topic is provided in another language (like Russian), translate it to the equivalent English grammar concept first."
+          content: "You are a creative English teacher creating UNIQUE and VARIED grammar exercises. IMPORTANT: Each exercise must be COMPLETELY DIFFERENT from others - use different subjects, verbs, contexts, and sentence structures. Never repeat similar sentences. All exercises MUST be in ENGLISH."
         },
         {
           role: "user",
-          content: `Create ${count} fill-in-the-blank exercises IN ENGLISH focusing on "${grammar}". All sentences and hints MUST be in English. Each sentence should have ONE word missing (marked with ___). Format: Return a JSON array of objects with 'sentence' (English sentence with ___), 'answer' (the missing English word), and 'hint' (English hint) fields.`
+          content: `Create ${count} UNIQUE and DIVERSE fill-in-the-blank exercises IN ENGLISH focusing on "${grammar}". 
+
+IMPORTANT REQUIREMENTS:
+- Each sentence MUST be completely different (different topics, different subjects, different contexts)
+- Use varied contexts like: ${randomContext}, personal experiences, hypothetical situations
+- Mix positive, negative, and question forms where applicable
+- Use different subjects (I, you, he, she, it, we, they, proper names)
+- Each sentence should have ONE word missing (marked with ___)
+- Request ID: ${uniqueId}
+
+Format: Return a JSON array of objects with 'sentence' (English sentence with ___), 'answer' (the missing English word), and 'hint' (short English hint) fields.`
         }
       ],
-      temperature: 0.7,
+      temperature: 0.95,
     });
 
     let content = response.choices[0].message.content;
