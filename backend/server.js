@@ -25,11 +25,21 @@ const essayRoutes = require('./routes/essayRoutes');
 const dialogueRoutes = require('./routes/dialogueRoutes');
 const fillBlankRoutes = require('./routes/fillBlankRoutes');
 const historyRoutes = require('./routes/historyRoutes');
+const grammarRoutes = require('./routes/grammarRoutes');
+const storyRoutes = require('./routes/storyRoutes');
+const paraphraseRoutes = require('./routes/paraphraseRoutes');
+const errorHuntRoutes = require('./routes/errorHuntRoutes');
+const levelTestRoutes = require('./routes/levelTestRoutes');
 
 app.use('/api/essay', essayRoutes);
 app.use('/api/dialogue', dialogueRoutes);
 app.use('/api/fill-blank', fillBlankRoutes);
 app.use('/api/history', historyRoutes);
+app.use('/api/grammar', grammarRoutes);
+app.use('/api/story', storyRoutes);
+app.use('/api/paraphrase', paraphraseRoutes);
+app.use('/api/error-hunt', errorHuntRoutes);
+app.use('/api/level-test', levelTestRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

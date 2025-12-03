@@ -5,7 +5,12 @@ import FeatureCard from './components/FeatureCard';
 import EssayGenerator from './components/EssayGenerator';
 import DialogueGenerator from './components/DialogueGenerator';
 import FillBlankGenerator from './components/FillBlankGenerator';
-import { FaPen, FaComments, FaEdit } from 'react-icons/fa';
+import GrammarChecker from './components/GrammarChecker';
+import StoryGenerator from './components/StoryGenerator';
+import Paraphraser from './components/Paraphraser';
+import ErrorHunt from './components/ErrorHunt';
+import LevelTest from './components/LevelTest';
+import { FaPen, FaComments, FaEdit, FaSpellCheck, FaBook, FaExchangeAlt, FaBug, FaGraduationCap } from 'react-icons/fa';
 
 function App() {
   const [activeFeature, setActiveFeature] = useState(null);
@@ -13,27 +18,67 @@ function App() {
   const features = [
     {
       id: 'essay',
-      title: 'Генератор тем для эссе',
-      description: 'Введите ключевое слово и получите 5 интересных тем для написания эссе',
+      title: 'Essay Topics',
+      description: 'Get 5 interesting essay topics based on your keyword',
       icon: <FaPen />,
       color: '#10b981',
       component: EssayGenerator
     },
     {
       id: 'dialogue',
-      title: 'Создатель диалогов',
-      description: 'Выберите тему и уровень сложности для создания практического диалога',
+      title: 'Dialogue Creator',
+      description: 'Create practice dialogues at your level',
       icon: <FaComments />,
       color: '#3b82f6',
       component: DialogueGenerator
     },
     {
       id: 'fill-blank',
-      title: 'Заполни пропуск',
-      description: 'Практикуйте грамматику с упражнениями, созданными нейросетью',
+      title: 'Fill the Blank',
+      description: 'Practice grammar with AI-generated exercises',
       icon: <FaEdit />,
       color: '#f59e0b',
       component: FillBlankGenerator
+    },
+    {
+      id: 'grammar',
+      title: 'Grammar Checker',
+      description: 'Check your text for grammar and spelling errors',
+      icon: <FaSpellCheck />,
+      color: '#ef4444',
+      component: GrammarChecker
+    },
+    {
+      id: 'story',
+      title: 'Story Generator',
+      description: 'Generate short stories for reading practice',
+      icon: <FaBook />,
+      color: '#8b5cf6',
+      component: StoryGenerator
+    },
+    {
+      id: 'paraphrase',
+      title: 'Paraphraser',
+      description: 'Learn different ways to say the same thing',
+      icon: <FaExchangeAlt />,
+      color: '#ec4899',
+      component: Paraphraser
+    },
+    {
+      id: 'error-hunt',
+      title: 'Error Hunt',
+      description: 'Find and fix grammar errors in sentences',
+      icon: <FaBug />,
+      color: '#06b6d4',
+      component: ErrorHunt
+    },
+    {
+      id: 'level-test',
+      title: 'Level Test',
+      description: 'Discover your English level (A1-C2)',
+      icon: <FaGraduationCap />,
+      color: '#6366f1',
+      component: LevelTest
     }
   ];
 

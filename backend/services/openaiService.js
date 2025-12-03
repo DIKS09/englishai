@@ -159,9 +159,263 @@ Format: [{"sentence": "She ___ to school.", "answer": "goes", "hint": "present s
   }
 }
 
+// Проверка текста (Grammar Checker)
+async function checkGrammar(text) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are an English grammar expert. Check the text for errors and provide corrections with explanations. Always respond in valid JSON format."
+        },
+        {
+          role: "user",
+          content: `Check this English text for grammar, spelling, and style errors: "${text}"
+
+Return JSON: {
+  "correctedText": "the fully corrected text",
+  "errors": [
+    {"original": "wrong part", "correction": "correct version", "explanation": "why it's wrong"}
+  ],
+  "overallScore": 85,
+  "tips": ["tip1", "tip2"]
+}`
+        }
+      ],
+      temperature: 0.3,
+    });
+
+    let content = response.choices[0].message.content;
+    content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      return {
+        correctedText: text,
+        errors: [],
+        overallScore: 100,
+        tips: ["Your text looks good!"]
+      };
+    }
+  } catch (error) {
+    console.error('OpenAI API Error:', error);
+    throw new Error('Failed to check grammar');
+  }
+}
+
+// Генератор историй
+async function generateStory(topic, level) {
+  try {
+    const levelMap = {
+      easy: "A1-A2 (simple words, short sentences, present tense)",
+      medium: "B1-B2 (varied vocabulary, mixed tenses, compound sentences)",
+      hard: "C1-C2 (advanced vocabulary, complex structures, idioms)"
+    };
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a creative English teacher writing engaging stories for language learners. Always respond in valid JSON."
+        },
+        {
+          role: "user",
+          content: `Write a short story (150-200 words) in English about "${topic}" at ${levelMap[level]} level.
+
+Return JSON: {
+  "title": "Story Title",
+  "story": "The full story text...",
+  "vocabulary": [
+    {"word": "example", "translation": "пример", "definition": "a thing to illustrate"}
+  ],
+  "questions": ["Question 1 about the story?", "Question 2?"]
+}`
+        }
+      ],
+      temperature: 0.8,
+    });
+
+    let content = response.choices[0].message.content;
+    content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      return {
+        title: `Story about ${topic}`,
+        story: content,
+        vocabulary: [],
+        questions: []
+      };
+    }
+  } catch (error) {
+    console.error('OpenAI API Error:', error);
+    throw new Error('Failed to generate story');
+  }
+}
+
+// Перефразирование
+async function paraphrase(sentence) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are an English language expert. Paraphrase sentences in different ways to help learners expand vocabulary. Respond in valid JSON."
+        },
+        {
+          role: "user",
+          content: `Paraphrase this sentence in 5 different ways: "${sentence}"
+
+Return JSON: {
+  "original": "${sentence}",
+  "paraphrases": [
+    {"text": "paraphrase 1", "style": "formal"},
+    {"text": "paraphrase 2", "style": "casual"},
+    {"text": "paraphrase 3", "style": "simple"},
+    {"text": "paraphrase 4", "style": "advanced"},
+    {"text": "paraphrase 5", "style": "creative"}
+  ]
+}`
+        }
+      ],
+      temperature: 0.8,
+    });
+
+    let content = response.choices[0].message.content;
+    content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      return {
+        original: sentence,
+        paraphrases: [{ text: content, style: "default" }]
+      };
+    }
+  } catch (error) {
+    console.error('OpenAI API Error:', error);
+    throw new Error('Failed to paraphrase');
+  }
+}
+
+// Найди ошибку
+async function generateErrorHunt(grammar, count = 5) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are an English teacher creating error-finding exercises. Each sentence must have exactly ONE grammatical error. Respond in valid JSON only."
+        },
+        {
+          role: "user",
+          content: `Create ${count} sentences with ONE grammar error each, focusing on "${grammar}".
+
+Return JSON array: [
+  {
+    "sentenceWithError": "She don't like coffee.",
+    "errorWord": "don't",
+    "correctWord": "doesn't",
+    "correctSentence": "She doesn't like coffee.",
+    "explanation": "With he/she/it, use 'doesn't' not 'don't'"
+  }
+]`
+        }
+      ],
+      temperature: 0.7,
+    });
+
+    let content = response.choices[0].message.content;
+    content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      content = jsonMatch[0];
+    }
+    
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      return [
+        {
+          sentenceWithError: "He go to school every day.",
+          errorWord: "go",
+          correctWord: "goes",
+          correctSentence: "He goes to school every day.",
+          explanation: "With he/she/it, add -s to the verb in Present Simple"
+        }
+      ];
+    }
+  } catch (error) {
+    console.error('OpenAI API Error:', error);
+    throw new Error('Failed to generate error hunt exercises');
+  }
+}
+
+// Тест на уровень
+async function generateLevelTest() {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are an English proficiency test creator. Create questions of increasing difficulty from A1 to C2. Respond in valid JSON only."
+        },
+        {
+          role: "user",
+          content: `Create 10 multiple-choice questions to test English level (2 questions per level: A1, A2, B1, B2, C1).
+
+Return JSON: {
+  "questions": [
+    {
+      "level": "A1",
+      "question": "What ___ your name?",
+      "options": ["is", "are", "am", "be"],
+      "correctAnswer": "is",
+      "points": 1
+    }
+  ]
+}`
+        }
+      ],
+      temperature: 0.6,
+    });
+
+    let content = response.choices[0].message.content;
+    content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      return {
+        questions: [
+          { level: "A1", question: "I ___ a student.", options: ["am", "is", "are", "be"], correctAnswer: "am", points: 1 },
+          { level: "A2", question: "She ___ to work yesterday.", options: ["go", "goes", "went", "going"], correctAnswer: "went", points: 2 },
+          { level: "B1", question: "I ___ finished my homework.", options: ["have", "has", "had", "having"], correctAnswer: "have", points: 3 }
+        ]
+      };
+    }
+  } catch (error) {
+    console.error('OpenAI API Error:', error);
+    throw new Error('Failed to generate level test');
+  }
+}
+
 module.exports = {
   generateEssayTopics,
   generateDialogue,
-  generateFillBlanks
+  generateFillBlanks,
+  checkGrammar,
+  generateStory,
+  paraphrase,
+  generateErrorHunt,
+  generateLevelTest
 };
 
