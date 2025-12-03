@@ -12,17 +12,20 @@ async function generateEssayTopics(keyword) {
       messages: [
         {
           role: "system",
-          content: "You are an English teacher helping students practice essay writing. Generate creative and educational essay topics."
+          content: "You are an English teacher helping students practice essay writing in English. IMPORTANT: All topics and descriptions MUST be written entirely in ENGLISH. If the keyword is in another language (like Russian), translate it first and generate English topics."
         },
         {
           role: "user",
-          content: `Generate 5 interesting essay topics related to the keyword "${keyword}". Each topic should be thought-provoking and suitable for English learners. Format: Return a JSON array of objects with 'title' and 'description' fields.`
+          content: `Generate 5 interesting essay topics IN ENGLISH related to the keyword "${keyword}". All titles and descriptions MUST be in English. Each topic should be thought-provoking and suitable for English learners. Format: Return a JSON array of objects with 'title' (English title) and 'description' (English description) fields.`
         }
       ],
       temperature: 0.8,
     });
 
-    const content = response.choices[0].message.content;
+    let content = response.choices[0].message.content;
+    
+    // Remove markdown code block markers if present
+    content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     
     // Try to parse JSON, if fails, create structured response
     try {
@@ -59,17 +62,20 @@ async function generateDialogue(topic, level) {
       messages: [
         {
           role: "system",
-          content: "You are an English teacher creating dialogue exercises for students."
+          content: "You are an English teacher creating dialogue exercises for students learning English. IMPORTANT: All dialogues MUST be written entirely in ENGLISH, regardless of what language the topic is provided in. If the topic is in another language (like Russian), translate it to English first."
         },
         {
           role: "user",
-          content: `Create a dialogue between 2 people about "${topic}" at ${levelDescriptions[level]}. The dialogue should have 8-10 exchanges (4-5 per person). Format: Return a JSON object with 'title', 'description', and 'lines' array. Each line should have 'speaker' and 'text' fields.`
+          content: `Create a dialogue IN ENGLISH between 2 people about "${topic}" at ${levelDescriptions[level]}. The dialogue MUST be entirely in English (this is for English language learners). The dialogue should have 8-10 exchanges (4-5 per person). Format: Return a JSON object with 'title' (in English), 'description' (in English), and 'lines' array. Each line should have 'speaker' (like "Waiter", "Customer", "Person A", etc.) and 'text' (the English dialogue) fields.`
         }
       ],
       temperature: 0.7,
     });
 
-    const content = response.choices[0].message.content;
+    let content = response.choices[0].message.content;
+    
+    // Remove markdown code block markers if present
+    content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     
     try {
       return JSON.parse(content);
@@ -97,17 +103,20 @@ async function generateFillBlanks(grammar, count = 5) {
       messages: [
         {
           role: "system",
-          content: "You are an English teacher creating grammar exercises."
+          content: "You are an English teacher creating grammar exercises for students learning English. IMPORTANT: All exercises MUST be written entirely in ENGLISH. If the grammar topic is provided in another language (like Russian), translate it to the equivalent English grammar concept first."
         },
         {
           role: "user",
-          content: `Create ${count} fill-in-the-blank exercises focusing on "${grammar}". Each sentence should have ONE word missing (marked with ___). Format: Return a JSON array of objects with 'sentence' (with ___), 'answer' (the missing word), and 'hint' fields.`
+          content: `Create ${count} fill-in-the-blank exercises IN ENGLISH focusing on "${grammar}". All sentences and hints MUST be in English. Each sentence should have ONE word missing (marked with ___). Format: Return a JSON array of objects with 'sentence' (English sentence with ___), 'answer' (the missing English word), and 'hint' (English hint) fields.`
         }
       ],
       temperature: 0.7,
     });
 
-    const content = response.choices[0].message.content;
+    let content = response.choices[0].message.content;
+    
+    // Remove markdown code block markers if present
+    content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     
     try {
       return JSON.parse(content);
