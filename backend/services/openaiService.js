@@ -120,11 +120,16 @@ CRITICAL REQUIREMENTS:
 4. Vary subjects: I, you, he, she, it, we, they
 5. Each sentence must be unique and different
 6. Mark missing word with ___
+7. HINT must be the BASE FORM of the word that needs to be changed (infinitive for verbs)
 
 Examples of CORRECT exercises:
-- {"sentence": "She ___ to work every day.", "answer": "goes", "hint": "Present Simple with he/she/it"}
-- {"sentence": "I have ___ finished my homework.", "answer": "already", "hint": "Present Perfect adverb"}
-- {"sentence": "They ___ watching TV when I arrived.", "answer": "were", "hint": "Past Continuous"}
+- {"sentence": "She ___ to work every day.", "answer": "goes", "hint": "go"}
+- {"sentence": "I have already ___ my homework.", "answer": "finished", "hint": "finish"}
+- {"sentence": "They ___ watching TV when I arrived.", "answer": "were", "hint": "be"}
+- {"sentence": "He ___ a letter yesterday.", "answer": "wrote", "hint": "write"}
+- {"sentence": "She has ___ to Paris twice.", "answer": "been", "hint": "be"}
+
+The hint is the dictionary/base form of the word. User must change it to fit the sentence.
 
 Return ONLY a valid JSON array. No explanations.`
         }
@@ -153,11 +158,11 @@ Return ONLY a valid JSON array. No explanations.`
       console.error('JSON Parse Error:', e.message, 'Content:', content.substring(0, 200));
       // Fallback with grammar-specific examples
       return [
-        { sentence: `I ___ English every day.`, answer: "study", hint: "verb for learning" },
-        { sentence: `She ___ to the gym yesterday.`, answer: "went", hint: "past tense of 'go'" },
-        { sentence: `They ___ playing football now.`, answer: "are", hint: "present continuous helper" },
-        { sentence: `He ___ already finished his homework.`, answer: "has", hint: "present perfect helper" },
-        { sentence: `We ___ go to the party tomorrow.`, answer: "will", hint: "future tense helper" }
+        { sentence: `I ___ English every day.`, answer: "study", hint: "study" },
+        { sentence: `She ___ to the gym yesterday.`, answer: "went", hint: "go" },
+        { sentence: `They ___ playing football now.`, answer: "are", hint: "be" },
+        { sentence: `He has already ___ his homework.`, answer: "finished", hint: "finish" },
+        { sentence: `We ___ go to the party tomorrow.`, answer: "will", hint: "will" }
       ];
     }
   } catch (error) {
