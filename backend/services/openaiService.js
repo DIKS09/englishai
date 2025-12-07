@@ -244,52 +244,81 @@ Rules:
 // Генератор историй
 async function generateStory(topic, level) {
   try {
+    console.log('Generating story:', topic, level);
+    
     const levelMap = {
       easy: "A1-A2 (simple words, short sentences, present tense)",
       medium: "B1-B2 (varied vocabulary, mixed tenses, compound sentences)",
       hard: "C1-C2 (advanced vocabulary, complex structures, idioms)"
     };
 
+    const levelDesc = levelMap[level] || levelMap.medium;
+
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are a creative English teacher writing engaging stories for language learners. Always respond in valid JSON."
+          content: "You are a creative English teacher. Write engaging stories and return ONLY valid JSON. No extra text."
         },
         {
           role: "user",
-          content: `Write a short story (150-200 words) in English about "${topic}" at ${levelMap[level]} level.
+          content: `Write a short story (150-200 words) in English about "${topic}" at ${levelDesc} level.
 
-Return JSON: {
-  "title": "Story Title",
-  "story": "The full story text...",
-  "vocabulary": [
-    {"word": "example", "translation": "пример", "definition": "a thing to illustrate"}
-  ],
-  "questions": ["Question 1 about the story?", "Question 2?"]
-}`
+Return this EXACT JSON structure:
+{"title": "Story Title", "story": "Full story text here...", "vocabulary": [{"word": "word1", "translation": "перевод", "definition": "meaning"}], "questions": ["Question 1?", "Question 2?"]}
+
+Requirements:
+- Story must be interesting and engaging
+- Include 3-5 vocabulary words
+- Include 2-3 comprehension questions
+- Return ONLY JSON, nothing else`
         }
       ],
-      temperature: 0.8,
+      temperature: 0.7,
     });
 
     let content = response.choices[0].message.content;
+    console.log('Story response:', content.substring(0, 100) + '...');
+    
+    // Clean response
     content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     
+    // Try to extract JSON
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      content = jsonMatch[0];
+    }
+    
     try {
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      return {
+        title: parsed.title || `Story about ${topic}`,
+        story: parsed.story || content,
+        vocabulary: Array.isArray(parsed.vocabulary) ? parsed.vocabulary : [],
+        questions: Array.isArray(parsed.questions) ? parsed.questions : []
+      };
     } catch (e) {
+      console.error('JSON parse error in generateStory:', e.message);
       return {
         title: `Story about ${topic}`,
         story: content,
         vocabulary: [],
-        questions: []
+        questions: ["What did you learn from this story?"]
       };
     }
   } catch (error) {
-    console.error('OpenAI API Error:', error);
-    throw new Error('Failed to generate story');
+    console.error('OpenAI API Error in generateStory:', error.message);
+    // Return fallback instead of throwing
+    return {
+      title: `A ${topic} Adventure`,
+      story: `Once upon a time, there was a wonderful adventure about ${topic}. The story was full of excitement and learning. Unfortunately, we couldn't generate the full story right now. Please try again!`,
+      vocabulary: [
+        { word: "adventure", translation: "приключение", definition: "an exciting experience" },
+        { word: "wonderful", translation: "замечательный", definition: "extremely good" }
+      ],
+      questions: ["What would you like to read about?", "Try generating another story!"]
+    };
   }
 }
 

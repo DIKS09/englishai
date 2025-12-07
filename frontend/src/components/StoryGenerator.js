@@ -24,10 +24,15 @@ function StoryGenerator() {
 
     try {
       const response = await axios.post('/api/story/generate', { topic, level });
-      setStory(response.data.story);
+      console.log('Story response:', response.data);
+      if (response.data && response.data.story) {
+        setStory(response.data.story);
+      } else {
+        setError('Unexpected response format');
+      }
     } catch (err) {
-      setError('Error generating story. Please try again.');
-      console.error(err);
+      console.error('Story generation error:', err.response?.data || err.message);
+      setError(err.response?.data?.error || 'Error generating story. Please try again.');
     } finally {
       setLoading(false);
     }
