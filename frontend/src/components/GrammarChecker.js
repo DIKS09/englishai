@@ -23,10 +23,15 @@ function GrammarChecker() {
 
     try {
       const response = await axios.post('/api/grammar/check', { text });
-      setResult(response.data.result);
+      console.log('Grammar check response:', response.data);
+      if (response.data && response.data.result) {
+        setResult(response.data.result);
+      } else {
+        setError('Unexpected response format');
+      }
     } catch (err) {
-      setError('Error checking grammar. Please try again.');
-      console.error(err);
+      console.error('Grammar check error:', err.response?.data || err.message);
+      setError(err.response?.data?.error || 'Error checking grammar. Please try again.');
     } finally {
       setLoading(false);
     }

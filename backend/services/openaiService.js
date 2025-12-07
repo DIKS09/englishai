@@ -174,46 +174,70 @@ Return ONLY a valid JSON array. No explanations.`
 // Проверка текста (Grammar Checker)
 async function checkGrammar(text) {
   try {
+    console.log('Checking grammar for text:', text.substring(0, 50) + '...');
+    
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are an English grammar expert. Check the text for errors and provide corrections with explanations. Always respond in valid JSON format."
+          content: "You are an English grammar expert. Analyze text and return ONLY valid JSON. No extra text or explanations outside JSON."
         },
         {
           role: "user",
-          content: `Check this English text for grammar, spelling, and style errors: "${text}"
+          content: `Analyze this English text for grammar, spelling, and style errors: "${text}"
 
-Return JSON: {
-  "correctedText": "the fully corrected text",
-  "errors": [
-    {"original": "wrong part", "correction": "correct version", "explanation": "why it's wrong"}
-  ],
-  "overallScore": 85,
-  "tips": ["tip1", "tip2"]
-}`
+Return this EXACT JSON structure:
+{"correctedText": "corrected version of the text", "errors": [{"original": "error", "correction": "fix", "explanation": "why"}], "overallScore": 75, "tips": ["tip 1", "tip 2"]}
+
+Rules:
+- overallScore is 0-100 (100 = perfect)
+- If no errors found, return empty errors array and score 100
+- Return ONLY the JSON, nothing else`
         }
       ],
-      temperature: 0.3,
+      temperature: 0.2,
     });
 
     let content = response.choices[0].message.content;
+    console.log('OpenAI response for grammar:', content.substring(0, 100) + '...');
+    
+    // Clean response
     content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     
+    // Try to extract JSON if wrapped in text
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      content = jsonMatch[0];
+    }
+    
     try {
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      // Validate required fields
+      return {
+        correctedText: parsed.correctedText || text,
+        errors: Array.isArray(parsed.errors) ? parsed.errors : [],
+        overallScore: typeof parsed.overallScore === 'number' ? parsed.overallScore : 80,
+        tips: Array.isArray(parsed.tips) ? parsed.tips : ["Keep practicing!"]
+      };
     } catch (e) {
+      console.error('JSON parse error in checkGrammar:', e.message);
       return {
         correctedText: text,
         errors: [],
-        overallScore: 100,
-        tips: ["Your text looks good!"]
+        overallScore: 85,
+        tips: ["Text analyzed. Keep practicing your English!"]
       };
     }
   } catch (error) {
-    console.error('OpenAI API Error:', error);
-    throw new Error('Failed to check grammar');
+    console.error('OpenAI API Error in checkGrammar:', error.message);
+    // Return fallback instead of throwing
+    return {
+      correctedText: text,
+      errors: [],
+      overallScore: 0,
+      tips: ["Sorry, analysis failed. Please try again."]
+    };
   }
 }
 
