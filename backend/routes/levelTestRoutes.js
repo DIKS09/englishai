@@ -5,20 +5,30 @@ const History = require('../models/History');
 
 router.post('/generate', async (req, res) => {
   try {
+    console.log('Level Test request received');
+    
     const test = await generateLevelTest();
+    console.log('Level Test result:', test.questions ? test.questions.length + ' questions' : 'failed');
 
-    // Save to history
-    const historyEntry = new History({
-      type: 'level-test',
-      input: {},
-      output: test
-    });
-    await historyEntry.save();
+    // Save to history (don't fail if this fails)
+    try {
+      const historyEntry = new History({
+        type: 'level-test',
+        input: {},
+        output: test
+      });
+      await historyEntry.save();
+    } catch (historyError) {
+      console.error('Failed to save history:', historyError.message);
+    }
 
     res.json({ test });
   } catch (error) {
-    console.error('Error generating level test:', error);
-    res.status(500).json({ error: 'Failed to generate level test' });
+    console.error('Error generating level test:', error.message);
+    res.status(500).json({ 
+      error: 'Failed to generate level test',
+      details: error.message 
+    });
   }
 });
 

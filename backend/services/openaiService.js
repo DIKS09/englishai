@@ -399,32 +399,35 @@ Rules:
 // Найди ошибку
 async function generateErrorHunt(grammar, count = 5) {
   try {
+    console.log('Generating Error Hunt:', grammar, count);
+    
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are an English teacher creating error-finding exercises. Each sentence must have exactly ONE grammatical error. Respond in valid JSON only."
+          content: "You are an English teacher creating error-finding exercises. Each sentence has exactly ONE grammatical error. Return ONLY valid JSON array."
         },
         {
           role: "user",
           content: `Create ${count} sentences with ONE grammar error each, focusing on "${grammar}".
 
-Return JSON array: [
-  {
-    "sentenceWithError": "She don't like coffee.",
-    "errorWord": "don't",
-    "correctWord": "doesn't",
-    "correctSentence": "She doesn't like coffee.",
-    "explanation": "With he/she/it, use 'doesn't' not 'don't'"
-  }
-]`
+Return this EXACT JSON array format:
+[{"sentenceWithError": "She don't like coffee.", "errorWord": "don't", "correctWord": "doesn't", "correctSentence": "She doesn't like coffee.", "explanation": "With he/she/it use doesn't"}]
+
+Rules:
+- Each sentence has exactly ONE error
+- Vary the subjects (I, you, he, she, we, they)
+- Make clear, common errors for learners to find
+- Return ONLY JSON array`
         }
       ],
-      temperature: 0.7,
+      temperature: 0.6,
     });
 
     let content = response.choices[0].message.content;
+    console.log('Error Hunt response:', content.substring(0, 100) + '...');
+    
     content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     
     const jsonMatch = content.match(/\[[\s\S]*\]/);
@@ -433,71 +436,114 @@ Return JSON array: [
     }
     
     try {
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+      throw new Error('Invalid array');
     } catch (e) {
+      console.error('JSON parse error in generateErrorHunt:', e.message);
       return [
-        {
-          sentenceWithError: "He go to school every day.",
-          errorWord: "go",
-          correctWord: "goes",
-          correctSentence: "He goes to school every day.",
-          explanation: "With he/she/it, add -s to the verb in Present Simple"
-        }
+        { sentenceWithError: "He go to school every day.", errorWord: "go", correctWord: "goes", correctSentence: "He goes to school every day.", explanation: "With he/she/it, add -s to the verb in Present Simple" },
+        { sentenceWithError: "She don't like coffee.", errorWord: "don't", correctWord: "doesn't", correctSentence: "She doesn't like coffee.", explanation: "With he/she/it, use 'doesn't' not 'don't'" },
+        { sentenceWithError: "They was playing football.", errorWord: "was", correctWord: "were", correctSentence: "They were playing football.", explanation: "Use 'were' with plural subjects" },
+        { sentenceWithError: "I have went to Paris.", errorWord: "went", correctWord: "been", correctSentence: "I have been to Paris.", explanation: "Use past participle 'been' with have/has" },
+        { sentenceWithError: "She can to swim.", errorWord: "to", correctWord: "", correctSentence: "She can swim.", explanation: "Don't use 'to' after modal verbs" }
       ];
     }
   } catch (error) {
-    console.error('OpenAI API Error:', error);
-    throw new Error('Failed to generate error hunt exercises');
+    console.error('OpenAI API Error in generateErrorHunt:', error.message);
+    // Return fallback
+    return [
+      { sentenceWithError: "He go to school every day.", errorWord: "go", correctWord: "goes", correctSentence: "He goes to school every day.", explanation: "With he/she/it, add -s to the verb in Present Simple" },
+      { sentenceWithError: "She don't like coffee.", errorWord: "don't", correctWord: "doesn't", correctSentence: "She doesn't like coffee.", explanation: "With he/she/it, use 'doesn't' not 'don't'" },
+      { sentenceWithError: "They was playing football.", errorWord: "was", correctWord: "were", correctSentence: "They were playing football.", explanation: "Use 'were' with plural subjects" },
+      { sentenceWithError: "I have went to Paris.", errorWord: "went", correctWord: "been", correctSentence: "I have been to Paris.", explanation: "Use past participle 'been' with have/has" },
+      { sentenceWithError: "She can to swim.", errorWord: "to", correctWord: "", correctSentence: "She can swim.", explanation: "Don't use 'to' after modal verbs" }
+    ];
   }
 }
 
 // Тест на уровень
 async function generateLevelTest() {
   try {
+    console.log('Generating Level Test...');
+    
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are an English proficiency test creator. Create questions of increasing difficulty from A1 to C2. Respond in valid JSON only."
+          content: "You are an English proficiency test creator. Create questions of increasing difficulty. Return ONLY valid JSON."
         },
         {
           role: "user",
-          content: `Create 10 multiple-choice questions to test English level (2 questions per level: A1, A2, B1, B2, C1).
+          content: `Create 10 multiple-choice questions to test English level (2 per level: A1, A2, B1, B2, C1).
 
-Return JSON: {
-  "questions": [
-    {
-      "level": "A1",
-      "question": "What ___ your name?",
-      "options": ["is", "are", "am", "be"],
-      "correctAnswer": "is",
-      "points": 1
-    }
-  ]
-}`
+Return this EXACT JSON structure:
+{"questions": [{"level": "A1", "question": "What ___ your name?", "options": ["is", "are", "am", "be"], "correctAnswer": "is", "points": 1}]}
+
+Rules:
+- 2 questions for A1 (points: 1), A2 (points: 2), B1 (points: 3), B2 (points: 4), C1 (points: 5)
+- Each question has exactly 4 options
+- Questions test grammar, vocabulary, or comprehension
+- Return ONLY JSON`
         }
       ],
-      temperature: 0.6,
+      temperature: 0.5,
     });
 
     let content = response.choices[0].message.content;
+    console.log('Level Test response:', content.substring(0, 100) + '...');
+    
     content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     
+    // Try to extract JSON
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      content = jsonMatch[0];
+    }
+    
     try {
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      if (parsed.questions && Array.isArray(parsed.questions)) {
+        return parsed;
+      }
+      throw new Error('Invalid format');
     } catch (e) {
+      console.error('JSON parse error in generateLevelTest:', e.message);
       return {
         questions: [
           { level: "A1", question: "I ___ a student.", options: ["am", "is", "are", "be"], correctAnswer: "am", points: 1 },
+          { level: "A1", question: "___ is your name?", options: ["What", "Where", "Who", "How"], correctAnswer: "What", points: 1 },
           { level: "A2", question: "She ___ to work yesterday.", options: ["go", "goes", "went", "going"], correctAnswer: "went", points: 2 },
-          { level: "B1", question: "I ___ finished my homework.", options: ["have", "has", "had", "having"], correctAnswer: "have", points: 3 }
+          { level: "A2", question: "There ___ many people at the party.", options: ["was", "were", "is", "be"], correctAnswer: "were", points: 2 },
+          { level: "B1", question: "I ___ never been to Japan.", options: ["have", "has", "had", "am"], correctAnswer: "have", points: 3 },
+          { level: "B1", question: "If I ___ rich, I would travel the world.", options: ["am", "was", "were", "be"], correctAnswer: "were", points: 3 },
+          { level: "B2", question: "She suggested ___ to the cinema.", options: ["to go", "going", "go", "went"], correctAnswer: "going", points: 4 },
+          { level: "B2", question: "The book ___ by millions of people.", options: ["has read", "has been read", "have been read", "is reading"], correctAnswer: "has been read", points: 4 },
+          { level: "C1", question: "Had I known, I ___ you.", options: ["would help", "would have helped", "will help", "helped"], correctAnswer: "would have helped", points: 5 },
+          { level: "C1", question: "The matter is too complex to be ___ lightly.", options: ["taken", "took", "taking", "take"], correctAnswer: "taken", points: 5 }
         ]
       };
     }
   } catch (error) {
-    console.error('OpenAI API Error:', error);
-    throw new Error('Failed to generate level test');
+    console.error('OpenAI API Error in generateLevelTest:', error.message);
+    // Return fallback
+    return {
+      questions: [
+        { level: "A1", question: "I ___ a student.", options: ["am", "is", "are", "be"], correctAnswer: "am", points: 1 },
+        { level: "A1", question: "___ is your name?", options: ["What", "Where", "Who", "How"], correctAnswer: "What", points: 1 },
+        { level: "A2", question: "She ___ to work yesterday.", options: ["go", "goes", "went", "going"], correctAnswer: "went", points: 2 },
+        { level: "A2", question: "There ___ many people at the party.", options: ["was", "were", "is", "be"], correctAnswer: "were", points: 2 },
+        { level: "B1", question: "I ___ never been to Japan.", options: ["have", "has", "had", "am"], correctAnswer: "have", points: 3 },
+        { level: "B1", question: "If I ___ rich, I would travel the world.", options: ["am", "was", "were", "be"], correctAnswer: "were", points: 3 },
+        { level: "B2", question: "She suggested ___ to the cinema.", options: ["to go", "going", "go", "went"], correctAnswer: "going", points: 4 },
+        { level: "B2", question: "The book ___ by millions of people.", options: ["has read", "has been read", "have been read", "is reading"], correctAnswer: "has been read", points: 4 },
+        { level: "C1", question: "Had I known, I ___ you.", options: ["would help", "would have helped", "will help", "helped"], correctAnswer: "would have helped", points: 5 },
+        { level: "C1", question: "The matter is too complex to be ___ lightly.", options: ["taken", "took", "taking", "take"], correctAnswer: "taken", points: 5 }
+      ]
+    };
   }
 }
 

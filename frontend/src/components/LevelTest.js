@@ -19,10 +19,15 @@ function LevelTest() {
 
     try {
       const response = await axios.post('/api/level-test/generate');
-      setTest(response.data.test);
+      console.log('Level Test response:', response.data);
+      if (response.data && response.data.test && response.data.test.questions) {
+        setTest(response.data.test);
+      } else {
+        setError('Unexpected response format');
+      }
     } catch (err) {
-      setError('Error generating test. Please try again.');
-      console.error(err);
+      console.error('Level Test error:', err.response?.data || err.message);
+      setError(err.response?.data?.error || 'Error generating test. Please try again.');
     } finally {
       setLoading(false);
     }

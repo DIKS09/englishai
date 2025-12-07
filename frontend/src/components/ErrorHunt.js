@@ -27,10 +27,15 @@ function ErrorHunt() {
 
     try {
       const response = await axios.post('/api/error-hunt/generate', { grammar, count: 5 });
-      setExercises(response.data.exercises);
+      console.log('Error Hunt response:', response.data);
+      if (response.data && response.data.exercises) {
+        setExercises(response.data.exercises);
+      } else {
+        setError('Unexpected response format');
+      }
     } catch (err) {
-      setError('Error generating exercises. Please try again.');
-      console.error(err);
+      console.error('Error Hunt error:', err.response?.data || err.message);
+      setError(err.response?.data?.error || 'Error generating exercises. Please try again.');
     } finally {
       setLoading(false);
     }
