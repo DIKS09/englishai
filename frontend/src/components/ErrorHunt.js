@@ -52,10 +52,54 @@ function ErrorHunt() {
     setShowResults(false);
   };
 
+  // Normalize answer to handle contractions
+  const normalizeAnswer = (answer) => {
+    const contractions = {
+      "haven't": "have not", "hasn't": "has not", "hadn't": "had not",
+      "don't": "do not", "doesn't": "does not", "didn't": "did not",
+      "won't": "will not", "wouldn't": "would not", "can't": "cannot",
+      "couldn't": "could not", "shouldn't": "should not", "mustn't": "must not",
+      "isn't": "is not", "aren't": "are not", "wasn't": "was not", "weren't": "were not",
+      "i'm": "i am", "you're": "you are", "he's": "he is", "she's": "she is",
+      "it's": "it is", "we're": "we are", "they're": "they are",
+      "i've": "i have", "you've": "you have", "we've": "we have", "they've": "they have",
+      "i'll": "i will", "you'll": "you will", "he'll": "he will", "she'll": "she will",
+      "we'll": "we will", "they'll": "they will", "i'd": "i would", "you'd": "you would",
+      "he'd": "he would", "she'd": "she would", "we'd": "we would", "they'd": "they would"
+    };
+    
+    let normalized = answer.trim().toLowerCase();
+    const expandedForms = {};
+    for (const [contraction, full] of Object.entries(contractions)) {
+      expandedForms[full] = contraction;
+    }
+    
+    return {
+      original: normalized,
+      expanded: contractions[normalized] || normalized,
+      contracted: expandedForms[normalized] || normalized
+    };
+  };
+
   const isCorrect = (index) => {
     const userAnswer = (userAnswers[index] || '').trim().toLowerCase();
     const correctAnswer = exercises[index].correctWord.trim().toLowerCase();
-    return userAnswer === correctAnswer;
+    
+    if (userAnswer === correctAnswer) return true;
+    
+    const userNorm = normalizeAnswer(userAnswer);
+    const correctNorm = normalizeAnswer(correctAnswer);
+    
+    const userForms = [userNorm.original, userNorm.expanded, userNorm.contracted];
+    const correctForms = [correctNorm.original, correctNorm.expanded, correctNorm.contracted];
+    
+    for (const uf of userForms) {
+      for (const cf of correctForms) {
+        if (uf === cf) return true;
+      }
+    }
+    
+    return false;
   };
 
   return (

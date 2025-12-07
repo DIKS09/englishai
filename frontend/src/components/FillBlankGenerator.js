@@ -52,10 +52,97 @@ function FillBlankGenerator() {
     setShowResults(false);
   };
 
+  // Normalize answer to handle contractions (haven't = have not, etc.)
+  const normalizeAnswer = (answer) => {
+    const contractions = {
+      "haven't": "have not",
+      "hasn't": "has not",
+      "hadn't": "had not",
+      "don't": "do not",
+      "doesn't": "does not",
+      "didn't": "did not",
+      "won't": "will not",
+      "wouldn't": "would not",
+      "can't": "cannot",
+      "couldn't": "could not",
+      "shouldn't": "should not",
+      "mustn't": "must not",
+      "isn't": "is not",
+      "aren't": "are not",
+      "wasn't": "was not",
+      "weren't": "were not",
+      "i'm": "i am",
+      "you're": "you are",
+      "he's": "he is",
+      "she's": "she is",
+      "it's": "it is",
+      "we're": "we are",
+      "they're": "they are",
+      "i've": "i have",
+      "you've": "you have",
+      "we've": "we have",
+      "they've": "they have",
+      "i'll": "i will",
+      "you'll": "you will",
+      "he'll": "he will",
+      "she'll": "she will",
+      "it'll": "it will",
+      "we'll": "we will",
+      "they'll": "they will",
+      "i'd": "i would",
+      "you'd": "you would",
+      "he'd": "he would",
+      "she'd": "she would",
+      "we'd": "we would",
+      "they'd": "they would",
+      "let's": "let us",
+      "that's": "that is",
+      "there's": "there is",
+      "here's": "here is",
+      "what's": "what is",
+      "who's": "who is",
+      "where's": "where is",
+      "how's": "how is"
+    };
+
+    let normalized = answer.trim().toLowerCase();
+    
+    // Create reverse mapping (full form -> contraction)
+    const expandedForms = {};
+    for (const [contraction, full] of Object.entries(contractions)) {
+      expandedForms[full] = contraction;
+    }
+    
+    // Return both the original normalized and all possible variants
+    return {
+      original: normalized,
+      expanded: contractions[normalized] || normalized,
+      contracted: expandedForms[normalized] || normalized
+    };
+  };
+
   const isCorrect = (index) => {
     const userAnswer = (userAnswers[index] || '').trim().toLowerCase();
     const correctAnswer = exercises[index].answer.trim().toLowerCase();
-    return userAnswer === correctAnswer;
+    
+    // Direct match
+    if (userAnswer === correctAnswer) return true;
+    
+    // Check with normalization (contractions)
+    const userNorm = normalizeAnswer(userAnswer);
+    const correctNorm = normalizeAnswer(correctAnswer);
+    
+    // Compare all possible forms
+    const userForms = [userNorm.original, userNorm.expanded, userNorm.contracted];
+    const correctForms = [correctNorm.original, correctNorm.expanded, correctNorm.contracted];
+    
+    for (const uf of userForms) {
+      for (const cf of correctForms) {
+        if (uf === cf) return true;
+      }
+    }
+    
+    return false;
   };
 
   return (
