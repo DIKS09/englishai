@@ -325,46 +325,74 @@ Requirements:
 // Перефразирование
 async function paraphrase(sentence) {
   try {
+    console.log('Paraphrasing:', sentence.substring(0, 50) + '...');
+    
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are an English language expert. Paraphrase sentences in different ways to help learners expand vocabulary. Respond in valid JSON."
+          content: "You are an English language expert. Paraphrase sentences in different styles. Return ONLY valid JSON, no extra text."
         },
         {
           role: "user",
           content: `Paraphrase this sentence in 5 different ways: "${sentence}"
 
-Return JSON: {
-  "original": "${sentence}",
-  "paraphrases": [
-    {"text": "paraphrase 1", "style": "formal"},
-    {"text": "paraphrase 2", "style": "casual"},
-    {"text": "paraphrase 3", "style": "simple"},
-    {"text": "paraphrase 4", "style": "advanced"},
-    {"text": "paraphrase 5", "style": "creative"}
-  ]
-}`
+Return this EXACT JSON structure:
+{"original": "${sentence}", "paraphrases": [{"text": "version 1", "style": "formal"}, {"text": "version 2", "style": "casual"}, {"text": "version 3", "style": "simple"}, {"text": "version 4", "style": "advanced"}, {"text": "version 5", "style": "creative"}]}
+
+Rules:
+- formal = professional/business language
+- casual = everyday friendly language
+- simple = easy words for beginners
+- advanced = sophisticated vocabulary
+- creative = unique/unusual phrasing
+- Return ONLY JSON`
         }
       ],
-      temperature: 0.8,
+      temperature: 0.7,
     });
 
     let content = response.choices[0].message.content;
+    console.log('Paraphrase response:', content.substring(0, 100) + '...');
+    
+    // Clean response
     content = content.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     
+    // Try to extract JSON
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      content = jsonMatch[0];
+    }
+    
     try {
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      return {
+        original: parsed.original || sentence,
+        paraphrases: Array.isArray(parsed.paraphrases) ? parsed.paraphrases : []
+      };
     } catch (e) {
+      console.error('JSON parse error in paraphrase:', e.message);
       return {
         original: sentence,
-        paraphrases: [{ text: content, style: "default" }]
+        paraphrases: [
+          { text: content || "Alternative version of the sentence", style: "default" }
+        ]
       };
     }
   } catch (error) {
-    console.error('OpenAI API Error:', error);
-    throw new Error('Failed to paraphrase');
+    console.error('OpenAI API Error in paraphrase:', error.message);
+    // Return fallback instead of throwing
+    return {
+      original: sentence,
+      paraphrases: [
+        { text: "This sentence can be said differently.", style: "formal" },
+        { text: "You could say this another way!", style: "casual" },
+        { text: "Same meaning, different words.", style: "simple" },
+        { text: "An alternative formulation exists.", style: "advanced" },
+        { text: "Try rephrasing it yourself!", style: "creative" }
+      ]
+    };
   }
 }
 

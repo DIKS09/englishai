@@ -23,10 +23,15 @@ function Paraphraser() {
 
     try {
       const response = await axios.post('/api/paraphrase/generate', { sentence });
-      setResult(response.data.result);
+      console.log('Paraphrase response:', response.data);
+      if (response.data && response.data.result) {
+        setResult(response.data.result);
+      } else {
+        setError('Unexpected response format');
+      }
     } catch (err) {
-      setError('Error paraphrasing. Please try again.');
-      console.error(err);
+      console.error('Paraphrase error:', err.response?.data || err.message);
+      setError(err.response?.data?.error || 'Error paraphrasing. Please try again.');
     } finally {
       setLoading(false);
     }
