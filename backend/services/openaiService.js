@@ -107,22 +107,29 @@ async function generateFillBlanks(grammar, count = 5) {
       messages: [
         {
           role: "system",
-          content: "You are an English teacher. Create grammar exercises in English. Always respond with valid JSON only, no extra text."
+          content: "You are a professional English teacher creating grammar exercises. You MUST create grammatically PERFECT sentences. Double-check every sentence for correctness before including it. All sentences must be natural, commonly used English phrases."
         },
         {
           role: "user",
-          content: `Create exactly ${count} fill-in-the-blank exercises for "${grammar}" grammar topic. Context: ${randomContext}.
+          content: `Create exactly ${count} GRAMMATICALLY PERFECT fill-in-the-blank exercises for "${grammar}". Context: ${randomContext}.
 
-Rules:
-- All in English
-- Each sentence different (use I, you, he, she, we, they)
-- One word missing marked as ___
-- Return ONLY valid JSON array
+CRITICAL REQUIREMENTS:
+1. Every sentence MUST be 100% grammatically correct when the blank is filled
+2. Use natural, everyday English expressions
+3. The missing word should clearly demonstrate the grammar rule
+4. Vary subjects: I, you, he, she, it, we, they
+5. Each sentence must be unique and different
+6. Mark missing word with ___
 
-Format: [{"sentence": "She ___ to school.", "answer": "goes", "hint": "present simple"}]`
+Examples of CORRECT exercises:
+- {"sentence": "She ___ to work every day.", "answer": "goes", "hint": "Present Simple with he/she/it"}
+- {"sentence": "I have ___ finished my homework.", "answer": "already", "hint": "Present Perfect adverb"}
+- {"sentence": "They ___ watching TV when I arrived.", "answer": "were", "hint": "Past Continuous"}
+
+Return ONLY a valid JSON array. No explanations.`
         }
       ],
-      temperature: 0.85,
+      temperature: 0.5,
     });
 
     let content = response.choices[0].message.content;
