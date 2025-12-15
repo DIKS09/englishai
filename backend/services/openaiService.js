@@ -8,7 +8,7 @@ const openai = new OpenAI({
 // 🎯 DEMO MODE - Фиксированные данные для презентации
 // Установите DEMO_MODE=true в .env для использования
 // =====================================================
-const DEMO_MODE = process.env.DEMO_MODE === 'true' || true; // true для скриншотов
+const DEMO_MODE = process.env.DEMO_MODE === 'true' || false; // false = реальная работа с OpenAI
 
 // Генерация тем для эссе
 async function generateEssayTopics(keyword) {
