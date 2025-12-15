@@ -12,13 +12,18 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('✅ MongoDB Atlas connected successfully'))
-.catch((err) => console.error('❌ MongoDB connection error:', err));
+// MongoDB Connection (non-blocking)
+if (process.env.MONGODB_URI) {
+  mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000, // 5 second timeout
+  })
+  .then(() => console.log('✅ MongoDB Atlas connected successfully'))
+  .catch((err) => console.error('❌ MongoDB connection error (app will work without history):', err.message));
+} else {
+  console.log('⚠️ MONGODB_URI not set - running without database (history disabled)');
+}
 
 // Routes
 const essayRoutes = require('./routes/essayRoutes');

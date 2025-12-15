@@ -17,13 +17,17 @@ router.post('/generate', async (req, res) => {
 
     const dialogue = await generateDialogue(topic, level);
 
-    // Save to history
-    const historyEntry = new History({
-      type: 'dialogue',
-      input: { topic, level },
-      output: dialogue
-    });
-    await historyEntry.save();
+    // Try to save to history (don't block if MongoDB fails)
+    try {
+      const historyEntry = new History({
+        type: 'dialogue',
+        input: { topic, level },
+        output: dialogue
+      });
+      await historyEntry.save();
+    } catch (dbError) {
+      console.log('Could not save to history:', dbError.message);
+    }
 
     res.json({ dialogue });
   } catch (error) {

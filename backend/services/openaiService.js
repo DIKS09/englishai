@@ -1,14 +1,20 @@
 const OpenAI = require('openai');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// =====================================================
+// 🎯 DEMO MODE - Работает без API ключа!
+// =====================================================
+const DEMO_MODE = !process.env.OPENAI_API_KEY || process.env.DEMO_MODE === 'true';
 
-// =====================================================
-// 🎯 DEMO MODE - Фиксированные данные для презентации
-// Установите DEMO_MODE=true в .env для использования
-// =====================================================
-const DEMO_MODE = process.env.DEMO_MODE === 'true' || false; // false = реальная работа с OpenAI
+// Создаём OpenAI клиент только если есть ключ
+let openai = null;
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+  console.log('✅ OpenAI API configured');
+} else {
+  console.log('⚠️ No OPENAI_API_KEY - running in DEMO MODE with sample data');
+}
 
 // Генерация тем для эссе
 async function generateEssayTopics(keyword) {

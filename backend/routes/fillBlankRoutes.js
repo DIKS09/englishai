@@ -14,13 +14,17 @@ router.post('/generate', async (req, res) => {
     const exerciseCount = count || 5;
     const exercises = await generateFillBlanks(grammar, exerciseCount);
 
-    // Save to history
-    const historyEntry = new History({
-      type: 'fill-blank',
-      input: { grammar, count: exerciseCount },
-      output: exercises
-    });
-    await historyEntry.save();
+    // Try to save to history (don't block if MongoDB fails)
+    try {
+      const historyEntry = new History({
+        type: 'fill-blank',
+        input: { grammar, count: exerciseCount },
+        output: exercises
+      });
+      await historyEntry.save();
+    } catch (dbError) {
+      console.log('Could not save to history:', dbError.message);
+    }
 
     res.json({ exercises });
   } catch (error) {
